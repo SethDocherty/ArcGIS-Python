@@ -47,7 +47,8 @@ SYS_PATHS_PYTHON32 = {
     '10.3': 'C:\Python27\ArcGIS10.3;C:\Python27\ArcGIS10.3\Scripts',
     '10.3.1': 'C:\Python27\ArcGIS10.3;C:\Python27\ArcGIS10.3\Scripts',
     '10.4': 'C:\Python27\ArcGIS10.4;C:\Python27\ArcGIS10.4\Scripts',
-    '10.4.1': 'C:\Python27\ArcGIS10.4;C:\Python27\ArcGIS10.4\Scripts'
+    '10.4.1': 'C:\Python27\ArcGIS10.4;C:\Python27\ArcGIS10.4\Scripts',
+	'10.5': 'C:\Python27\ArcGIS10.5;C:\Python27\ArcGIS10.5\Scripts'
     }
 
 SYS_PATHS_PYTHON64 = {
@@ -56,7 +57,8 @@ SYS_PATHS_PYTHON64 = {
     '10.3': 'C:\Python27\ArcGISx6410.3;C:\Python27\ArcGISx6410.3\Scripts',
     '10.3.1': 'C:\Python27\ArcGISx6410.3;C:\Python27\ArcGISx6410.3\Scripts',
     '10.4': 'C:\Python27\ArcGISx6410.4;C:\Python27\ArcGISx6410.4\Scripts',
-    '10.4.1': 'C:\Python27\ArcGISx6410.4;C:\Python27\ArcGISx6410.4\Scripts'
+    '10.4.1': 'C:\Python27\ArcGISx6410.4;C:\Python27\ArcGISx6410.4\Scripts',
+	'10.5': 'C:\Python27\ArcGISx6410.5;C:\Python27\ArcGISx6410.5\Scripts'
     }
 
 #Name of package to install. If python package needs to be installed, change the varable to desired name.  Otherwise keep variable set to none.

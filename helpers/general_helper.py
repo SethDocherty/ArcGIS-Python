@@ -289,7 +289,8 @@ def WordCount(dictionary):
                 temp += occurance
                 Wordcnt[str] = temp
     return Wordcnt
-    
+
+
 #..............................................................................................................................................
 
 # Misc Functions
@@ -299,7 +300,10 @@ def Space2Underscore(fields):
     Replace spaces in strings with an underscore.
     This is intended for header fields from that need to be compared against fields in ArcGIS.
     '''
-    field_update=[]
+    field_update = []
+    if type(fields) is not type([]):
+        x = fields.replace(' ','_')
+        return x
     for field in fields:
         if field.find(" ") > 0:
             x=field.replace(' ','_')

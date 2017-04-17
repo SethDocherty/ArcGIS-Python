@@ -53,6 +53,19 @@ def Add_Records_to_Table(input_list, table_path):
                 print "Ran in to a Problem adding the following row to the table... {}: Likely an issues with text format i.e. unicode encoding problem. Try fixing the items and run the script again.".format(row)
             iCursor.insertRow(row)
 
+
+def Copy_FC(fc_name, fc_to_copy, output_gdb):
+    '''
+    Quickly copy a feature class to another location.  This function will check to see if
+    the feature class already exists at said location before performing the copy.
+    '''
+    fc_path = os.path.join(output_gdb, fc_name)
+    # Export Table from SDE/Main Database to user specified database
+    if arcpy.Exists(fc_path): # Find out if FC already exists.  FeatureClassToFeatureClass does not overwrite.
+        arcpy.Delete_management(fc_path)
+    arcpy.FeatureClassToFeatureClass_conversion(fc_to_copy, output_gdb, fc_name)
+
+
 #TODO
 def Create_Empty_Table(input_field_info, table_name, path):
     '''
@@ -82,13 +95,15 @@ def Create_Empty_Table(input_field_info, table_name, path):
     arcpy.Delete_management(tmp_table)
 
 
-def Create_FL(LayerName, FCPath, expression =''):
+def Create_FL(LayerName, FCPath, expression=''):
     '''
-    Create a Feature layer from a feature class. Optionally, an expression clause can be passed in to
-    filter out a subset of data.
+    Create a Feature layer from a feature class. Optionally, an expression clause can be passed 
+    in to filter out a subset of data.
     '''
     if arcpy.Exists(LayerName):
-        arcpy.Delete_management(LayerName)
+        desc = arcpy.Describe(LayerName)
+        if desc.dataType is "FeatureLayer":
+            arcpy.Delete_management(LayerName)
     try:
         if expression:
             return arcpy.MakeFeatureLayer_management(FCPath, LayerName, expression, "")
@@ -113,30 +128,44 @@ def Create_TV(LayerName, TBLPath, expression =''):
     except:
         return arcpy.AddError(arcpy.GetMessages(2))
 
+# TODO - Under Construction
+#def csv_to_table(input_csv, input_fc, scratch_gdb):
+#    '''
+#    Don't need input FC
+#    Don't need field selection
+#    '''
+#    # Getting Filepath/name of input csv/fc
+#    csv_path, csv_name = InputCheck(input_csv)
+#    fc_path, fc_name = InputCheck(input_fc)
 
-def csv_to_table(input_csv, input_fc, scratch_gdb):
+#    #Extracting CSV stuff
+#    csv_list = Extract_File_Records(csv_path,"No")
+#    header = Space2Underscore(csv_list.pop(0))
+#    #fields = Extract_input_fields_from_csv(header, header)
+#    field_index = get_column_index(header,header)
+#    ##arcpy.AddMessage(field_index) ##TEST
+#    csv_list = extract_list_columns(csv_list, field_index, "No")
+
+#    #Creating blank table and appending csv list
+#    name = "csv2table_temp"
+#    header_fieldInfo = get_Data_Type_FromGIS(fields, fc_path)
+#    Create_Empty_Table(header_fieldInfo, name, scratch_gdb)
+#    Add_Records_to_Table(csv_list, os.path.join(scratch_gdb, name))
+#    return os.path.join(scratch_gdb, name)
+
+
+def csv_to_table(input_file, GDB_path):
     '''
-    Don't need input FC
-    Don't need field selection
+    Convert a csv file to Table. Table path is returned
     '''
-    # Getting Filepath/name of input csv/fc
-    csv_path, csv_name = InputCheck(input_csv)
-    fc_path, fc_name = InputCheck(input_fc)
+    name = os.path.splitext(os.path.basename(input_file))[0]
+    name = name.replace(" ","_")
+    out_path = os.path.join(GDB_path, name)
+    if arcpy.Exists(out_path):
+        arcpy.Delete_management(out_path)
+    arcpy.TableToTable_conversion(input_file, GDB_path, name)
+    return out_path
 
-    #Extracting CSV stuff
-    csv_list = Extract_File_Records(csv_path,"No")
-    header = Space2Underscore(csv_list.pop(0))
-    #fields = Extract_input_fields_from_csv(header, header)
-    field_index = get_column_index(header,header)
-    ##arcpy.AddMessage(field_index) ##TEST
-    csv_list = extract_list_columns(csv_list, field_index, "No")
-
-    #Creating blank table and appending csv list
-    name = "csv2table_temp"
-    header_fieldInfo = get_Data_Type_FromGIS(fields, fc_path)
-    Create_Empty_Table(header_fieldInfo, name, scratch_gdb)
-    Add_Records_to_Table(csv_list, os.path.join(scratch_gdb, name))
-    return os.path.join(scratch_gdb, name)
 
 def does_value_exist(fc,field,value):
     '''
@@ -187,6 +216,23 @@ def Extract_Field_Info(fc):
             item.append(field.name)
             item.append(field.type)
             field_info.append(item)
+    return field_info
+
+
+def Extract_Field_InfoDict(fc):
+    '''
+    Extract Field name and Type.
+    Return dictionary format: {Name: Type}
+
+    *NOTE*
+        - Sort of a replication of the function called "get_Data_Type"
+    '''
+    field_info = dict()
+    for field in arcpy.ListFields(fc):
+        if field.name == 'Shape' or field.name == 'Shape_Length' or field.name == 'OBJECTID' or field.name == 'RID':
+            pass
+        else:
+            field_info[field.name] = field.type
     return field_info
 
 
@@ -302,6 +348,23 @@ def Get_Database_Path(input_path):
         return workspace.catalogPath
 
 
+def Join_Table_to_FC(fc_path, table_path ,join_field, fields_to_join='', clause=''):
+    '''
+    Join a table to a fc.  This function will create the necessary layer/table views and peform a permanent join to the input FC
+    User can optionally pass in a where clause to filter out specific records from the table as well as a list of specific fields from
+    the table that will be joined to the FC.
+
+    Temporary layers views and table views are deleted
+    '''
+    tmp_layer = "temp_layer_join"
+    Create_FL(tmp_layer, fc_path)
+    tmp_table = "temp_table_join"
+    Create_TV(tmp_table, table_path, clause)
+    arcpy.JoinField_management(tmp_layer, join_field, tmp_table, join_field, fields_to_join)
+    del tmp_table
+    del tmp_layer
+
+
 def InputCheck(Input_Layer):
     '''
     Check if there is a filepath from the input layers. If not, pre-pend the path. Also extract the Layer names.
@@ -386,6 +449,16 @@ def unique_values(fc,field):
     '''
     with arcpy.da.SearchCursor(fc,[field])as cur:
         return sorted({row[0] for row in cur})
+
+
+def Validate_Field_Type(field_type, valid_types):
+    '''
+    Validate field types
+    '''
+    if field_type in valid_types:
+        return True
+    else:
+        return False
 
 
 #..............................................................................................................................................
@@ -572,3 +645,123 @@ def create_pams_pin(input_row):
     return input_row
 
 #..............................................................................................................................................
+# Modifying Document
+
+
+def add_layer_TOC(fc_name,df):
+    '''
+    Add Layer to TOC
+    '''
+    addLayer = arcpy.mapping.Layer(fc_name)
+    arcpy.mapping.AddLayer(df,addLayer,"BOTTOM")
+
+
+def add_table_TOC(table_path, mxd_path):
+    '''
+    Add table to TOC
+    '''
+    addTable = arcpy.MakeTableView_management(table_path)
+    mxd = arcpy.mapping.MapDocument(mxd_path)
+    df = arcpy.mapping.ListDataFrames(mxd)[0]
+    arcpy.mapping.AddTableView(df, addTable.getOutput(0), "BOTTOM")
+
+
+def CopyPasteLayer(CopyLayerName, PastedLayerName, mxd_obj, df):
+    '''
+    Copy a source layer and move to the bottom
+    '''
+    Create_FL(PastedLayerName, CopyLayerName)
+    CopyLayer = arcpy.mapping.Layer(PastedLayerName)
+    arcpy.mapping.AddLayer(df, CopyLayer, "BOTTOM")
+
+
+def Create_Class_Break_Labels(class_vals):
+    '''
+    Create a valid input string for Bin Labels.
+    '''
+    max = len(class_vals)
+    class_labels = list()
+    for val in range(len(class_vals)):
+        if (val+1) < max:
+            left = class_vals[val]
+            right = class_vals[val+1]
+            class_labels.append("{} - {}".format(left, right))
+    return class_labels
+
+
+def Create_Group_Layer(empty_group_layer_path, group_name,  mxd_obj, df):
+    '''
+    Create group layer and rename
+    '''
+    #Import empty group layer and move layer just added to group layer.
+    empty_group_layer = arcpy.mapping.Layer(empty_group_layer_path)
+    arcpy.mapping.AddLayer(df, empty_group_layer, "BOTTOM")
+    empty_group_layer = arcpy.mapping.ListLayers(mxd_obj,'Empty Group Layer', df)[0]
+    empty_group_layer.name = group_name
+
+
+def move_to_group(group_name, lyr_name, mxd_obj, df):
+    '''
+    Move feature layer to group layer
+    '''
+    group_layer = arcpy.mapping.ListLayers(mxd_obj, group_name, df)[0]
+    move_layer = arcpy.mapping.ListLayers(mxd_obj, lyr_name, df)[0]
+    arcpy.mapping.AddLayerToGroup(df, group_layer, move_layer, "BOTTOM")
+    arcpy.mapping.RemoveLayer(df, move_layer)
+
+def Import_Symbology(input_fc, input_source, mxd_obj, df):
+    '''
+    Import symbology from a source feature layer and apply to input feature layer
+    '''
+    updateLayer = arcpy.mapping.ListLayers(mxd_obj, input_fc, df)[0]
+    sourceLayer = arcpy.mapping.Layer(input_source)
+    arcpy.mapping.UpdateLayer(df, updateLayer, sourceLayer, True)
+
+
+def Remove_Old_Layers(mxd_obj, df, layers):
+    '''
+    Remove layer from TOC
+    '''
+    if len(layers) != 0:
+        for lyr in arcpy.mapping.ListLayers(mxd, '', dataframe):
+            if layers[0] in lyr.name:
+                arcpy.mapping.RemoveLayer(dataframe, lyr)
+                print "removed {}".format(lyr.name)
+        layers.remove(layers[0])
+        return Remove_Old_Layers(mxd_obj, df, layers)
+    else:
+        print "All the old layers have been removed"
+        arcpy.AddMessage("All the older layers have been removed")
+
+def Symbolize_field(fc_name, field, group_lyr_name, lyr_file, mxd_obj, df, bin_size='', class_break_vals=''):
+    '''
+    Batch process to Symbolize multiple fields and optionally reclassify the field value quantity.  This function will take the following inputs to symbolize a field.
+
+        Input Feature Layer
+        Input Field
+        Group layer (layer file is stored in a group layer
+        Layer File (this file is used to extract all the symbology settings
+        Input mxd object (created from arcpy.mapping.MapDocument(*mxd_path*)
+        Input dataframe object (Created from arcpy.mapping.ListDataFrames(mxd)[0])
+        
+    *OPTIONAL*
+        Bin Size (Number of Classes to split into)
+        Class Break Values (Manually set sized bins at specific values)
+    '''
+    layer_name = field.replace("_", " ")#(group_lyr_name +" - " + field).replace("_", " ")
+    arcpy.AddMessage(".........................Symbolizing the following field: {}".format(field))
+    CopyPasteLayer(fc_name, layer_name, mxd_obj, df) #Copy FC with joined table and rename based
+    move_to_group(group_lyr_name,layer_name, mxd_obj, df) # Move layer inside themed group layer
+    Import_Symbology(layer_name, lyr_file, mxd_obj, df)
+
+    # Modify symbology for layers of interest
+    lyr = arcpy.mapping.ListLayers(mxd_obj, layer_name, df)[0]
+    lyr.definitionQuery = '''{} <> 0 '''.format(field)
+    lyr.symbology.reclassify() # update the symbology properties based on the layer's actual data source information and statistics
+    if lyr.symbologyType == "GRADUATED_COLORS":
+        lyr.symbology.valueField = field
+        if bin_size:
+            lyr.symbology.numClasses = int(bin_size)
+        if class_break_vals:
+            lyr.symbology.classBreakValues = class_break_vals
+            lyr.symbology.classBreakLabels = Create_Class_Break_Labels(class_break_vals)

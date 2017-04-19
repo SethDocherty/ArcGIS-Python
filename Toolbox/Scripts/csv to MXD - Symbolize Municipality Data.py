@@ -150,7 +150,7 @@ try:
         gis_helper.Create_FL(FC_NAME,FC_PATH)
 
         #Add Layers to TOC -> Create group layer -> import symbology
-        #gis_helper.add_layer_TOC(FC_PATH, dataframe) #This Feature Class will be used to make copies and renamed based on the field that will be symbolized.
+        #This Feature Class will be used to make copies and renamed based on the field that will be symbolized.
         gis_helper.add_layer_TOC(FC_NAME, dataframe)
         gis_helper.Create_Group_Layer(empty_group_path, "Record Analysis", mxd, dataframe)
         gis_helper.Import_Symbology(FC_NAME, layer_file, mxd, dataframe)

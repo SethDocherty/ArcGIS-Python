@@ -252,14 +252,14 @@ def Extract_Table_Records(fc,fields=''):
     '''
     if not fields:
         fields = Extract_Field_Name(fc)
-    records=[]
+    records = []
     with arcpy.da.SearchCursor(fc, fields) as cursor:
         for row in cursor:
             records.append(list(row))
     return records
 
 
-def FieldExist(FC,field):
+def FieldExist(FC, field):
     '''
     Check if a field exists in a Feature Class or Table
     '''
@@ -269,7 +269,7 @@ def FieldExist(FC,field):
     else:
       return False
 
-def FieldExist_List(fc,input_list):
+def FieldExist_List(fc, input_list):
     '''
     Check if a field from a list exists in a Feature Class or Table.
     '''
@@ -348,7 +348,7 @@ def Get_Database_Path(input_path):
         return workspace.catalogPath
 
 
-def Join_Table_to_FC(fc_path, table_path ,join_field, fields_to_join='', clause=''):
+def Join_Table_to_FC(fc_path, table_path, join_field, fields_to_join='', clause=''):
     '''
     Join a table to a fc.  This function will create the necessary layer/table views and peform a permanent join to the input FC
     User can optionally pass in a where clause to filter out specific records from the table as well as a list of specific fields from
@@ -383,7 +383,7 @@ def is_empty(fc):
     '''
     Check to see if a feature class is empty.  Return True if it is.
     '''
-    count = str (arcpy.GetCount_management(FC_INPUTPATH))
+    count = str(arcpy.GetCount_management(FC_INPUTPATH))
     if count1 == "0":
         return True
     else:
@@ -439,15 +439,15 @@ def make_attribute_dict(fc, key_field, attr_list=['*']):
     cursor_fields = [key_field] + list(set(valid_fields) - set([key_field]))
     with arcpy.da.SearchCursor(fc, cursor_fields) as cursor:
         for row in cursor:
-            attdict[row[0]] = dict(zip(cursor.fields,row))
+            attdict[row[0]] = dict(zip(cursor.fields, row))
     return attdict
 
 
-def unique_values(fc,field):
+def unique_values(fc, field):
     '''
     Return a list of unique values from a user spcified field in a feature class or table.
     '''
-    with arcpy.da.SearchCursor(fc,[field])as cur:
+    with arcpy.da.SearchCursor(fc, [field]) as cur:
         return sorted({row[0] for row in cur})
 
 
@@ -471,7 +471,7 @@ def get_index(county_field, muni_field, muni_coded_val, header_fields):
     '''
     ref_fields = [county_field, muni_field, muni_coded_val]
     #get index value for the fc header fields
-    ref_fields = make_dictionary(header_fields,ref_fields)
+    ref_fields = make_dictionary(header_fields, ref_fields)
     index = ref_fields.values()
     return index
 
@@ -487,7 +487,7 @@ def Get_Municipality_Dict():
     # Extract the header fields and records from the municipality fc
     muni_rows_header = Extract_Field_Name(muni_fc)
     muni_rows = Extract_Table_Records(muni_fc)
-    (county_field_index, muni_field_index, muni_coded_val_index) = get_index(county_field,muni_field,muni_coded_val,muni_rows_header)
+    (county_field_index, muni_field_index, muni_coded_val_index) = get_index(county_field, muni_field, muni_coded_val, muni_rows_header)
     county_names = Get_County_List()
 
     #Create dictionary of Counties with a dictionary of municipalities that stores the municipality code as a value.
@@ -696,7 +696,7 @@ def Create_Group_Layer(empty_group_layer_path, group_name,  mxd_obj, df):
     #Import empty group layer and move layer just added to group layer.
     empty_group_layer = arcpy.mapping.Layer(empty_group_layer_path)
     arcpy.mapping.AddLayer(df, empty_group_layer, "BOTTOM")
-    empty_group_layer = arcpy.mapping.ListLayers(mxd_obj,'Empty Group Layer', df)[0]
+    empty_group_layer = arcpy.mapping.ListLayers(mxd_obj, 'Empty Group Layer', df)[0]
     empty_group_layer.name = group_name
 
 
@@ -748,10 +748,10 @@ def Symbolize_field(fc_name, field, group_lyr_name, lyr_file, mxd_obj, df, bin_s
         Bin Size (Number of Classes to split into)
         Class Break Values (Manually set sized bins at specific values)
     '''
-    layer_name = field.replace("_", " ")#(group_lyr_name +" - " + field).replace("_", " ")
+    layer_name = (group_lyr_name +" - " + field).replace("_", " ") #field.replace("_", " ")
     arcpy.AddMessage(".........................Symbolizing the following field: {}".format(field))
     CopyPasteLayer(fc_name, layer_name, mxd_obj, df) #Copy FC with joined table and rename based
-    move_to_group(group_lyr_name,layer_name, mxd_obj, df) # Move layer inside themed group layer
+    move_to_group(group_lyr_name, layer_name, mxd_obj, df) # Move layer inside themed group layer
     Import_Symbology(layer_name, lyr_file, mxd_obj, df)
 
     # Modify symbology for layers of interest

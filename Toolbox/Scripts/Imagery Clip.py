@@ -33,7 +33,8 @@ def unique_values(fc, field):
 
 def InputCheck(Input_Layer):
     '''
-    #Check if there is a filepath from the input layers. If not, pre-pend the path. Also extract the FC names.
+    Check if there is a filepath from the input layers. If not, pre-pend the path. 
+    Also extract the FC names.
     '''
     if arcpy.Exists(Input_Layer):
         # join(arcpy.Describe(Input_Layer).catalogPath,arcpy.Describe(Input_Layer).name)
@@ -47,8 +48,8 @@ def InputCheck(Input_Layer):
 
 def Create_FL(LayerName, FCPath, expression=''):
     '''
-    Create a Feature layer from a feature class. Optionally, an expression clause can be passed in to
-    filter out a subset of data.
+    Create a Feature layer from a feature class. Optionally, an expression clause can be passed in
+    to filter out a subset of data.
     '''
     if arcpy.Exists(LayerName):
         arcpy.Delete_management(LayerName)
@@ -107,8 +108,8 @@ arcpy.AddMessage("File type: {}".format(Output_File_Type))
 
 INPUT_PATH = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(os.path.normpath(INPUT_PATH))
-INPUT_DIR = os.path.join(BASE_DIR, "Input Data")
-LOG_DIR = os.path.join(BASE_DIR, "Logs")
+SCRIPT_CONTENTS = os.path.join(BASE_DIR, "Imagery Clip")
+LOG_DIR = os.path.join(SCRIPT_CONTENTS, "Logs")
 
 # Extract Path and Table Name
 Clip_Feat_Path, Clip_Feat_Name = InputCheck(Clipping_Features)

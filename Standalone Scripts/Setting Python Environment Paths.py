@@ -1,4 +1,4 @@
-import os, subprocess, sys, platform, urllib, re
+import os, subprocess, sys, urllib, re
 from os.path import split, join
 from os import path
 
@@ -35,7 +35,10 @@ def Download_File(url):
 try:
     import arcpy
 except ImportError:
-    print "Arcpy is not installed. ArcGIS may not be installed on this PC"
+    print """ArcGIS may not be installed on this PC since the arcpy python package failed to import.\n
+    Here is the current version of Python that is running: {}\n
+    If ArcMap is installed on your machine and the 64-bit Background Geoprocessing product was installed,  
+    for some reason the 32 bit varient of python was executed over the 64 bit varient.""".format(sys.version)
     exit()
 
 #.....................................................................
@@ -48,7 +51,9 @@ SYS_PATHS_PYTHON32 = {
     '10.3.1': 'C:\Python27\ArcGIS10.3;C:\Python27\ArcGIS10.3\Scripts',
     '10.4': 'C:\Python27\ArcGIS10.4;C:\Python27\ArcGIS10.4\Scripts',
     '10.4.1': 'C:\Python27\ArcGIS10.4;C:\Python27\ArcGIS10.4\Scripts',
-	'10.5': 'C:\Python27\ArcGIS10.5;C:\Python27\ArcGIS10.5\Scripts'
+	'10.5': 'C:\Python27\ArcGIS10.5;C:\Python27\ArcGIS10.5\Scripts',
+    '10.5.1': 'C:\Python27\ArcGIS10.5;C:\Python27\ArcGIS10.5\Scripts',
+    '10.6': 'C:\Python27\ArcGIS10.6;C:\Python27\ArcGIS10.6\Scripts'
     }
 
 SYS_PATHS_PYTHON64 = {
@@ -58,7 +63,9 @@ SYS_PATHS_PYTHON64 = {
     '10.3.1': 'C:\Python27\ArcGISx6410.3;C:\Python27\ArcGISx6410.3\Scripts',
     '10.4': 'C:\Python27\ArcGISx6410.4;C:\Python27\ArcGISx6410.4\Scripts',
     '10.4.1': 'C:\Python27\ArcGISx6410.4;C:\Python27\ArcGISx6410.4\Scripts',
-	'10.5': 'C:\Python27\ArcGISx6410.5;C:\Python27\ArcGISx6410.5\Scripts'
+	'10.5': 'C:\Python27\ArcGISx6410.5;C:\Python27\ArcGISx6410.5\Scripts',
+    '10.5.1': 'C:\Python27\ArcGISx6410.5;C:\Python27\ArcGISx6410.5\Scripts',
+    '10.6': 'C:\Python27\ArcGISx6410.6;C:\Python27\ArcGISx6410.6\Scripts'
     }
 
 #Name of package to install. If python package needs to be installed, change the varable to desired name.  Otherwise keep variable set to none.
@@ -69,26 +76,27 @@ SYS_PATHS = (os.environ['Path']).split(';')
 
 try:
     #Check to see which to see if running 32 bit python
-    if platform.architecture()[0] == '32bit':
-        ver = ArcGIS_Version_Check()
+    if sys.version.find("32 bit") > 0:
+        ver = ArcGIS_Version_Check().split(".1")[0]
         paths = SYS_PATHS_PYTHON32[ver].split(';')
         if paths[0] in SYS_PATHS and paths[1] in SYS_PATHS:
             print "Environment Paths for Python 32bit are ok for ArcMap Version {}".format(ver)
         else:
             print "Python 32bit for ArcGIS {} is not set as a environment variable, fixing that now....".format(ver)
-            print "ArcGIS Version #: {} > Updating Environment Variables with new Python Paths.".format(ver)
+            print "ArcGIS Version: {} >>> Updating Environment Variables with new Python Paths.".format(ver)
             CMD_Writeout(SYS_PATHS_PYTHON32[ver])
 
     #Check to see which to see if running 64 bit python
-    elif platform.architecture()[0] == '64bit':
-        ver = ArcGIS_Version_Check()
+    elif sys.version.find("64 bit") > 0:
+        ver = ArcGIS_Version_Check().split(".1")[0]
         paths = SYS_PATHS_PYTHON64[ver].split(';')
         if paths[0] in SYS_PATHS and paths[1] in SYS_PATHS:
             print "Environment Paths for Python 64bit are ok for ArcMap Version {}".format(ver)
         else:
             print "Python 64bit for ArcGIS {} is not set as a environment variable, fixing that now....".format(ver)
-            print "ArcGIS Version #: {} > Updating Environment Variables with new Python Paths.".format(ver)
+            print "ArcGIS Version: {} >>> Updating Environment Variables with new Python Paths.".format(ver)
             CMD_Writeout(SYS_PATHS_PYTHON64[ver])
+
 except Exception, e:
     # If an error occurred, print line number and error message
     import traceback, sys
